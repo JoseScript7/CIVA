@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CIVA Orchestrator &amp; Deception Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#00311f",
+                        "on-secondary-fixed-variant": "#005236",
+                        "primary-container": "#4d8eff",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-background": "#dfe2f1",
+                        "on-tertiary-fixed-variant": "#930013",
+                        "outline-variant": "#424754",
+                        "surface": "#0f131d",
+                        "surface-dim": "#0f131d",
+                        "tertiary-fixed-dim": "#ffb3ad",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#313540",
+                        "primary-fixed-dim": "#adc6ff",
+                        "primary-fixed": "#d8e2ff",
+                        "on-primary-container": "#00285d",
+                        "error-container": "#93000a",
+                        "on-primary-fixed": "#001a42",
+                        "on-secondary-fixed": "#002113",
+                        "on-tertiary-container": "#5c0008",
+                        "secondary-fixed": "#6ffbbe",
+                        "secondary-container": "#00a572",
+                        "surface-tint": "#adc6ff",
+                        "on-primary-fixed-variant": "#004395",
+                        "surface-container-highest": "#313540",
+                        "surface-container": "#1c1f2a",
+                        "on-surface": "#dfe2f1",
+                        "inverse-surface": "#dfe2f1",
+                        "background": "#0f131d",
+                        "surface-container-lowest": "#0a0e18",
+                        "inverse-primary": "#005ac2",
+                        "primary": "#adc6ff",
+                        "surface-container-high": "#262a35",
+                        "on-secondary": "#003824",
+                        "surface-container-low": "#171b26",
+                        "outline": "#8c909f",
+                        "secondary": "#4edea3",
+                        "surface-bright": "#353944",
+                        "tertiary-container": "#ff5451",
+                        "on-tertiary-fixed": "#410004",
+                        "on-surface-variant": "#c2c6d6",
+                        "inverse-on-surface": "#2c303b",
+                        "on-tertiary": "#68000a",
+                        "tertiary": "#ffb3ad",
+                        "tertiary-fixed": "#ffdad7",
+                        "on-primary": "#002e6a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .font-label { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel {
+            background: rgba(49, 53, 64, 0.2);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(66, 71, 84, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar Anchor -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#171b26] dark:bg-[#171b26] flex flex-col h-full py-6 z-[60]">
+<div class="px-6 mb-8">
+<h1 class="text-2xl font-bold tracking-tighter text-[#adc6ff] font-['Space_Grotesk']">CIVA</h1>
+<p class="text-[10px] font-['JetBrains_Mono'] uppercase tracking-[0.2em] text-[#c2c6d6]/60">Tactical Command Layer</p>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-['Space_Grotesk'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">security</span> Sentinel
+            </a>
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-['Space_Grotesk'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">insights</span> Behavior
+            </a>
+<a class="bg-[#adc6ff]/10 text-[#adc6ff] border-r-2 border-[#adc6ff] px-4 py-3 flex items-center gap-3 transition-all font-['Space_Grotesk'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">settings_input_component</span> Orchestrator
+            </a>
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-['Space_Grotesk'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">android_fingerprint</span> Deception
+            </a>
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-['Space_Grotesk'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">database</span> Threat Intel
+            </a>
+</nav>
+<div class="px-3 pt-6 mt-6 border-t border-outline-variant/10">
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-['Space_Grotesk'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">tune</span> System Settings
+            </a>
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-['Space_Grotesk'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">history</span> Audit Logs
+            </a>
+</div>
+</aside>
+<!-- TopNavBar Anchor -->
+<header class="fixed top-0 right-0 left-64 h-16 w-[calc(100%-16rem)] z-50 bg-[#0f131d]/80 backdrop-blur-xl border-b border-[#424754]/15 shadow-2xl shadow-black/40">
+<div class="flex justify-between items-center px-8 w-full h-full">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></span>
+<span class="font-['JetBrains_Mono'] text-xs font-semibold uppercase tracking-widest text-[#4edea3]">Global Health: Stable</span>
+</div>
+<span class="font-['JetBrains_Mono'] text-xs font-semibold uppercase tracking-widest text-[#c2c6d6]">72k req/sec</span>
+<span class="font-['JetBrains_Mono'] text-xs font-semibold uppercase tracking-widest text-[#c2c6d6]">Risk Score: 12.4</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 border-r border-outline-variant/20 pr-6">
+<button class="material-symbols-outlined text-[#c2c6d6] hover:text-[#adc6ff] transition-all">notifications</button>
+<button class="material-symbols-outlined text-[#c2c6d6] hover:text-[#adc6ff] transition-all">terminal</button>
+</div>
+<div class="flex items-center gap-3">
+<button class="bg-[#adc6ff] text-[#002e6a] px-4 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider hover:brightness-110 transition-all">Deploy Policy</button>
+<img alt="Operator Alpha" class="w-8 h-8 rounded-sm object-cover border border-[#adc6ff]/30" data-alt="Professional portrait of a male cyber operations director in a dark studio setting with soft blue rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIAVQvJs2numkDOnllWPJLJ603DJdA4zL0qGm2xky5PLby2qR8I7SkASpXzcduArn1EgKMjMSPj5I1j-KjtZV51LZ39YaJ33j1LbwadHC0pSG48WDMI0PQOP3mfjFU-2Ns7pJC2G5hrcvZ3eotKsIc8V13PVD8lOZpmBixhiL2Vt2-G-XW_OkxoUUn-rdENnBhZy45ZSPxuc7lwm4nQuHQJMmrl1SUlHhhS3YlNYVDfj3A5xcp5NSSzL69jfvFEXPFB3jDj8NIiBsm"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-64 pt-16 p-8 bg-surface min-h-screen">
+<!-- Dashboard Header -->
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h2 class="text-3xl font-bold font-headline tracking-tight text-on-surface">Orchestration <span class="text-primary">&amp;</span> Deception</h2>
+<p class="text-on-surface-variant font-body">Policy enforcement layer and active counter-intelligence monitoring.</p>
+</div>
+<div class="flex gap-2">
+<div class="glass-panel px-4 py-2 rounded-lg flex flex-col items-end">
+<span class="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Active Deceptive Nodes</span>
+<span class="text-xl font-headline font-bold text-secondary">412 / 500</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-6">
+<!-- LEFT COLUMN: Orchestrator Rules & Metrics -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<!-- Performance Metrics Bento -->
+<div class="grid grid-cols-3 gap-6">
+<div class="surface-container rounded-lg p-6 relative overflow-hidden group">
+<div class="relative z-10">
+<span class="font-label text-xs text-on-surface-variant uppercase mb-2 block">Attacker Dwell Time</span>
+<div class="text-3xl font-headline font-bold text-on-surface">42m 18s</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-secondary text-sm">trending_up</span>
+<span class="text-xs text-secondary font-label">+12% vs last 24h</span>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">timer</span>
+</div>
+</div>
+<div class="surface-container rounded-lg p-6 relative overflow-hidden group">
+<div class="relative z-10">
+<span class="font-label text-xs text-on-surface-variant uppercase mb-2 block">Honeypot Hit Rate</span>
+<div class="text-3xl font-headline font-bold text-on-surface">89.4%</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+<span class="text-xs text-secondary font-label">Optimal Efficiency</span>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">target</span>
+</div>
+</div>
+<div class="surface-container rounded-lg p-6 relative overflow-hidden group">
+<div class="relative z-10">
+<span class="font-label text-xs text-on-surface-variant uppercase mb-2 block">Shadow Pivot Success</span>
+<div class="text-3xl font-headline font-bold text-on-surface">1,204</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-tertiary text-sm">priority_high</span>
+<span class="text-xs text-tertiary font-label">Requires Review</span>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">route</span>
+</div>
+</div>
+</div>
+<!-- Orchestrator Policy Ruleset -->
+<section class="surface-container rounded-lg overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-high/50">
+<h3 class="font-headline font-bold text-lg">Orchestrator Policy Ruleset</h3>
+<button class="text-xs font-label text-primary hover:underline">New Rule +</button>
+</div>
+<div class="p-6 space-y-4">
+<!-- Rule 1 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant/10 rounded-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded flex items-center justify-center bg-primary/10 text-primary">
+<span class="material-symbols-outlined">rule</span>
+</div>
+<div>
+<div class="font-headline font-medium text-on-surface">Critical Escalation</div>
+<div class="font-label text-xs text-on-surface-variant">IF Risk Score &gt; 85 THEN Isolator.Strict()</div>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<span class="text-[10px] font-label text-on-surface-variant uppercase block">Hits (24h)</span>
+<span class="font-label text-sm text-on-surface">14</span>
+</div>
+<div class="bg-secondary/20 text-secondary px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-widest">Active</div>
+</div>
+</div>
+<!-- Rule 2 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant/10 rounded-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded flex items-center justify-center bg-tertiary/10 text-tertiary">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<div>
+<div class="font-headline font-medium text-on-surface">Deceptive Pivot</div>
+<div class="font-label text-xs text-on-surface-variant">IF Anomalous_SQL_Pattern THEN Deception.Mirror()</div>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<span class="text-[10px] font-label text-on-surface-variant uppercase block">Hits (24h)</span>
+<span class="font-label text-sm text-on-surface">182</span>
+</div>
+<div class="bg-secondary/20 text-secondary px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-widest">Active</div>
+</div>
+</div>
+<!-- Rule 3 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant/10 rounded-sm border-l-4 border-l-tertiary">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded flex items-center justify-center bg-tertiary-container/10 text-tertiary-container">
+<span class="material-symbols-outlined">security_update_warning</span>
+</div>
+<div>
+<div class="font-headline font-medium text-on-surface">Persistent Surveillance</div>
+<div class="font-label text-xs text-on-surface-variant">Score &gt; 60 -&gt; Activate Deception</div>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<span class="text-[10px] font-label text-on-surface-variant uppercase block">Hits (24h)</span>
+<span class="font-label text-sm text-on-surface">841</span>
+</div>
+<div class="bg-secondary/20 text-secondary px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-widest">Active</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- RIGHT COLUMN: Sessions & Redis -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Active Shadow Sessions -->
+<section class="surface-container rounded-lg overflow-hidden border border-tertiary/20">
+<div class="px-6 py-4 border-b border-tertiary/15 flex items-center gap-2 bg-tertiary/5">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse shadow-[0_0_12px_#ffb3ad]"></span>
+<h3 class="font-headline font-bold text-lg text-tertiary">Active Shadow Sessions</h3>
+</div>
+<div class="p-4 space-y-2 max-h-[400px] overflow-y-auto">
+<!-- Session 1 -->
+<div class="bg-surface-container-high p-4 rounded-sm border-l-2 border-tertiary cursor-pointer hover:bg-surface-bright transition-all group">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs text-primary">SESS_X882_Tactical</span>
+<span class="text-[10px] font-label text-tertiary bg-tertiary/10 px-2 py-0.5 rounded">LIVE FEED</span>
+</div>
+<div class="text-[10px] font-label text-on-surface-variant/80 mb-3 uppercase tracking-tighter">Attacker IP: 192.168.1.104</div>
+<div class="space-y-1">
+<div class="flex gap-2 text-[10px] font-label text-tertiary/70">
+<span class="opacity-50">14:22:01</span>
+<span>LS /var/www/internal</span>
+</div>
+<div class="flex gap-2 text-[10px] font-label text-tertiary">
+<span class="opacity-50">14:22:15</span>
+<span class="font-bold">CAT db_config.php</span>
+</div>
+<div class="flex gap-2 text-[10px] font-label text-tertiary/70">
+<span class="opacity-50">14:22:30</span>
+<span>CHMOD +X payload.sh</span>
+</div>
+</div>
+</div>
+<!-- Session 2 -->
+<div class="bg-surface-container-low p-4 rounded-sm border-l-2 border-outline-variant cursor-pointer hover:bg-surface-container-high transition-all group">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs text-on-surface-variant">SESS_A901_Mirror</span>
+<span class="text-[10px] font-label text-on-surface-variant/50">IDLE</span>
+</div>
+<div class="text-[10px] font-label text-on-surface-variant/40 mb-3 uppercase tracking-tighter">Attacker IP: 45.22.10.12</div>
+<div class="text-[10px] font-label italic text-on-surface-variant/40">Waiting for next tactical interaction...</div>
+</div>
+<!-- Session 3 -->
+<div class="bg-surface-container-low p-4 rounded-sm border-l-2 border-outline-variant cursor-pointer hover:bg-surface-container-high transition-all group">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs text-on-surface-variant">SESS_Z443_Vault</span>
+<span class="text-[10px] font-label text-on-surface-variant/50">IDLE</span>
+</div>
+<div class="text-[10px] font-label text-on-surface-variant/40 mb-3 uppercase tracking-tighter">Attacker IP: 102.1.8.99</div>
+<div class="text-[10px] font-label italic text-on-surface-variant/40">Honeypot "SecureVault_v2" engaged.</div>
+</div>
+</div>
+<div class="p-4 bg-tertiary-container/5 border-t border-tertiary/10">
+<button class="w-full text-center font-label text-[10px] text-tertiary uppercase tracking-widest hover:brightness-125 transition-all">View All 12 Active Intercepts</button>
+</div>
+</section>
+<!-- Redis Session Lookup -->
+<section class="surface-container rounded-lg overflow-hidden border border-outline-variant/20 shadow-lg">
+<div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between bg-surface-container-highest/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-sm">database</span>
+<h3 class="font-label font-bold text-xs uppercase tracking-widest">Redis Key-State Lookup</h3>
+</div>
+<span class="font-label text-[10px] text-secondary">0.4ms latency</span>
+</div>
+<div class="p-4">
+<div class="relative mb-4">
+<input class="w-full bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary rounded-sm text-xs font-label text-on-surface py-2 pl-8" placeholder="HGET session:risk_score..." type="text"/>
+<span class="material-symbols-outlined absolute left-2 top-2 text-sm text-on-surface-variant/50">search</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-[10px] font-label">
+<span class="text-on-surface-variant">node_cluster:primary</span>
+<span class="text-secondary font-bold">STABLE</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded font-label text-[11px] space-y-1">
+<div class="flex justify-between"><span class="text-primary/70">curr_connections</span> <span class="text-on-surface">4,281</span></div>
+<div class="flex justify-between"><span class="text-primary/70">keys_evicted_24h</span> <span class="text-on-surface">122</span></div>
+<div class="flex justify-between"><span class="text-primary/70">mem_usage</span> <span class="text-on-surface">4.12GB</span></div>
+</div>
+<button class="w-full bg-surface-container-high py-2 text-[10px] font-label uppercase tracking-widest text-on-surface-variant hover:text-on-surface border border-outline-variant/20 transition-all">Flush Non-Active Buffer</button>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- System Logs Stream -->
+<section class="mt-8 surface-container rounded-lg overflow-hidden">
+<div class="px-6 py-3 border-b border-outline-variant/15 flex items-center justify-between bg-surface-container-low">
+<span class="font-label text-xs font-bold uppercase tracking-widest">System Log Stream</span>
+<span class="font-label text-[10px] text-on-surface-variant/60">Filtered: Deception_Layer</span>
+</div>
+<div class="p-4 bg-surface-container-lowest font-label text-[11px] h-40 overflow-y-auto space-y-1 leading-relaxed">
+<div class="text-on-surface-variant"><span class="text-secondary">[14:40:01]</span> ORCH_CORE: Policy 'Critical Escalation' evaluated for UID_9912. Result: PASS.</div>
+<div class="text-on-surface-variant"><span class="text-secondary">[14:40:05]</span> DECEP_MGR: Virtualization layer 'Mantis-04' reported 12 new filesystem reads.</div>
+<div class="text-tertiary"><span class="text-tertiary-container">[14:40:12]</span> TRAP_HIT: Honeyfile 'etc/shadow_shadow' accessed by 192.168.1.104. Increasing Risk: +15.</div>
+<div class="text-on-surface-variant"><span class="text-secondary">[14:40:18]</span> ORCH_CORE: Dynamic pivot for session X882 initiated. Routing to Shadow_Node_6.</div>
+<div class="text-on-surface-variant opacity-50"><span class="text-secondary">[14:40:22]</span> REDIS_IO: Updated key session:risk_score:X882 -&gt; 92.</div>
+<div class="text-on-surface-variant opacity-40">[14:40:25] SYSLOG_HEARTBEAT: All deceptive nodes reporting healthy (412/412).</div>
+</div>
+</section>
+</main>
+<!-- FAB Suppression Rule Active: No FAB for Orchestrator Dashboard as per guidelines -->
+</body></html>
