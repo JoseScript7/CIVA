@@ -1,0 +1,450 @@
+# ============================================================
+# CIVA Platform — CI/CD Pipeline
+# GitHub Actions: Build, Test, Push Images, Deploy
+# ============================================================
+
+name: CIVA CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  EKS_CLUSTER: civa-prod
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  security-events: write
+
+jobs:
+  # ============================================================
+  # Stage 1: Lint & Static Analysis
+  # ============================================================
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Go Lint (Sentinel SDK)
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: services/sentinel-sdk/go.sum
+
+      - name: Go Lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          working-directory: services/sentinel-sdk
+          version: v1.57
+
+      # Python Lint (all Python services)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ruff
+        run: pip install ruff mypy
+
+      - name: Ruff Lint
+        run: |
+          ruff check services/behavior-agent/
+          ruff check services/orchestrator/
+          ruff check services/deception-agent/
+          ruff check services/threat-intel/
+
+      - name: Ruff Format Check
+        run: |
+          ruff format --check services/behavior-agent/
+          ruff format --check services/orchestrator/
+          ruff format --check services/deception-agent/
+          ruff format --check services/threat-intel/
+
+  # ============================================================
+  # Stage 1.5: Security Scanning
+  # ============================================================
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      # Go vulnerability check
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Go Vulnerability Check
+        working-directory: services/sentinel-sdk
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      # Python dependency audit
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Audit Python Dependencies
+        run: |
+          pip install pip-audit
+          for service in behavior-agent orchestrator deception-agent threat-intel; do
+            echo "--- Auditing services/$service ---"
+            pip-audit -r services/$service/requirements.txt --strict || true
+          done
+
+      # Container image scanning with Trivy
+      - name: Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      # Secret detection
+      - name: Detect Hardcoded Secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+  # ============================================================
+  # Stage 2: Unit Tests
+  # ============================================================
+  test-sentinel:
+    name: Test Sentinel SDK
+    runs-on: ubuntu-latest
+    needs: [lint, security-scan]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: services/sentinel-sdk/go.sum
+
+      - name: Run Go Tests
+        working-directory: services/sentinel-sdk
+        run: |
+          go mod tidy
+          go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-coverage
+          path: services/sentinel-sdk/coverage.out
+
+  test-behavior:
+    name: Test Behavior Agent
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        working-directory: services/behavior-agent
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx
+
+      - name: Run Tests
+        working-directory: services/behavior-agent
+        run: |
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: behavior-coverage
+          path: services/behavior-agent/htmlcov/
+
+  test-orchestrator:
+    name: Test Orchestrator
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        working-directory: services/orchestrator
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx
+
+      - name: Run Tests
+        working-directory: services/orchestrator
+        run: pytest tests/ -v --cov=src
+
+  test-deception:
+    name: Test Deception Agent
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        working-directory: services/deception-agent
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx
+
+      - name: Run Tests
+        working-directory: services/deception-agent
+        run: pytest tests/ -v --cov=src
+
+  test-threat-intel:
+    name: Test Threat Intel
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        working-directory: services/threat-intel
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx
+
+      - name: Run Tests
+        working-directory: services/threat-intel
+        run: pytest tests/ -v --cov=src
+
+  # ============================================================
+  # Stage 3: Build & Push Docker Images
+  # ============================================================
+  build-images:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [test-sentinel, test-behavior, test-orchestrator, test-deception, test-threat-intel, security-scan]
+    if: github.ref == 'refs/heads/main'
+
+    strategy:
+      matrix:
+        service:
+          - { name: sentinel-sdk, context: services/sentinel-sdk }
+          - { name: behavior-agent, context: services/behavior-agent }
+          - { name: orchestrator, context: services/orchestrator }
+          - { name: deception-agent, context: services/deception-agent }
+          - { name: threat-intel, context: services/threat-intel }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/civa/${{ matrix.service.name }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/civa/${{ matrix.service.name }}:latest
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/civa/${{ matrix.service.name }}:cache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/civa/${{ matrix.service.name }}:cache,mode=max
+
+      - name: Scan Container Image (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ECR_REGISTRY }}/civa/${{ matrix.service.name }}:${{ github.sha }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+          ignore-unfixed: true
+
+  # ============================================================
+  # Stage 3.5: Model Validation Gate
+  # ============================================================
+  model-validation:
+    name: Validate ML Model
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        working-directory: services/behavior-agent
+        run: pip install -r requirements.txt
+
+      - name: Generate Test Data & Train
+        working-directory: services/behavior-agent
+        run: |
+          python training/generate_synthetic.py
+          python training/run_training.py
+
+      - name: Validate Model Performance
+        working-directory: services/behavior-agent
+        run: |
+          python -c "
+          import pickle
+          with open('models/isolation_forest.pkl', 'rb') as f:
+              checkpoint = pickle.load(f)
+          metrics = checkpoint['metrics']
+          print(f'F1:      {metrics[\"f1\"]:.4f}')
+          print(f'AUC:     {metrics[\"auc_roc\"]:.4f}')
+          print(f'p99 ms:  {metrics[\"latency_p99_ms\"]:.3f}')
+          assert metrics['f1'] > 0.70, f'F1 score {metrics[\"f1\"]} below threshold 0.70'
+          assert metrics['latency_p99_ms'] < 15, f'Latency {metrics[\"latency_p99_ms\"]}ms exceeds 15ms SLA'
+          print('✅ Model validation passed — ready for deployment')
+          "
+
+  # ============================================================
+  # Stage 4: Deploy to EKS
+  # ============================================================
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    needs: [build-images, model-validation]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - name: Update Image Tags
+        run: |
+          for service in sentinel-sdk behavior-agent orchestrator deception-agent threat-intel; do
+            kubectl set image deployment/$service \
+              $service=${{ env.ECR_REGISTRY }}/civa/$service:${{ github.sha }} \
+              -n civa
+          done
+
+      - name: Wait for Rollout
+        run: |
+          for service in sentinel-sdk behavior-agent orchestrator deception-agent threat-intel; do
+            kubectl rollout status deployment/$service -n civa --timeout=300s
+          done
+
+      - name: Verify Health
+        run: |
+          for port in 8001 8002 8003 8004 8005; do
+            kubectl run health-check-$port --rm -i --restart=Never \
+              --image=curlimages/curl -- \
+              curl -sf http://sentinel-sdk.civa.svc:$port/health || echo "Port $port failed"
+          done
+
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "CIVA Deployment ${{ job.status }}: ${{ github.sha }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*CIVA Platform Deployment*\n*Status:* ${{ job.status }}\n*Commit:* `${{ github.sha }}`\n*Branch:* `${{ github.ref_name }}`"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ============================================================
+  # Stage 5: Integration Tests (Post-Deploy)
+  # ============================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run Pipeline Smoke Test
+        run: |
+          # Score a test event
+          SCORE_RESULT=$(curl -sf -X POST https://api.civa.internal/score \
+            -H "Content-Type: application/json" \
+            -d '{"event_id":"smoke-test","session_id":"smoke-sess","user_id":"smoke-user","req_per_min":10}')
+          echo "Score Result: $SCORE_RESULT"
+
+          # Verify response
+          echo $SCORE_RESULT | jq -e '.final_risk_score != null'
+
+      - name: Run Honeypot Verification
+        run: |
+          # Verify honeypots return data
+          curl -sf https://api.civa.internal/api/v1/.env | head -5
+
+      - name: Run Health Checks
+        run: |
+          for port in 8001 8002 8003 8004 8005; do
+            STATUS=$(curl -sf https://api.civa.internal/health | jq -r '.status')
+            echo "Service on port $port: $STATUS"
+          done

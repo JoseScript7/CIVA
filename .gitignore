@@ -1,0 +1,68 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+/services/sentinel-sdk/sentinel
+/services/sentinel-sdk/vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# ML Models
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.onnx
+services/behavior-agent/models/*.pkl
+services/threat-intel/src/nlp/models/*.bin
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
+# Node
+node_modules/
+.wrangler/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
