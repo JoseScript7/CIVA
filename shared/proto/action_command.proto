@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package civa.events;
+
+option go_package = "github.com/civa-platform/sentinel-sdk/pkg/models";
+
+// ActionCommand — Emitted by Orchestrator after policy evaluation
+message ActionCommand {
+  string command_id     = 1;
+  string session_id     = 2;
+  string user_id        = 3;
+  int64  timestamp_us   = 4;
+  
+  // ---- Decision ----
+  ActionType action     = 5;
+  double risk_score     = 6;   // Score that triggered this action
+  string policy_tier    = 7;   // Which policy tier matched
+  
+  // ---- Action Parameters ----
+  MFAChallenge mfa_challenge          = 8;
+  DeceptionActivation deception       = 9;
+  SessionTermination termination      = 10;
+  
+  // ---- Session State ----
+  string session_state    = 11;  // Current state after this action
+  int32  escalation_count = 12;
+  
+  // ---- Tracing ----
+  string trace_id   = 13;
+  string span_id    = 14;
+}
+
+enum ActionType {
+  SILENT_ALLOW          = 0;
+  MFA_CHALLENGE         = 1;
+  ACTIVATE_DECEPTION    = 2;
+  KILL_SESSION          = 3;
+}
+
+message MFAChallenge {
+  string challenge_id   = 1;
+  string challenge_type = 2;   // totp, sms, email, webauthn
+  int32  attempts_remaining = 3;
+  int64  expires_at     = 4;
+}
+
+message DeceptionActivation {
+  string shadow_session_id = 1;
+  repeated string honeypot_endpoints = 2;
+  bool   enable_canary_tokens = 3;
+  string routing_rule   = 4;
+}
+
+message SessionTermination {
+  string reason          = 1;
+  string attacker_ip     = 2;
+  bool   block_ip        = 3;
+  int32  block_duration_s = 4;
+  string forensic_url    = 5;
+  bool   pagerduty_sent  = 6;
+  string pagerduty_incident_id = 7;
+}

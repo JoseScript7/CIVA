@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package civa.events;
+
+option go_package = "github.com/civa-platform/sentinel-sdk/pkg/models";
+
+// RiskScore — Emitted by Behavior Agent after anomaly analysis
+message RiskScore {
+  string event_id         = 1;   // Reference to originating SessionEvent
+  string session_id       = 2;
+  string user_id          = 3;
+  int64  timestamp_us     = 4;
+  
+  // ---- Score ----
+  double raw_anomaly_score   = 5;  // Raw Isolation Forest score [-1, 1]
+  double normalized_score    = 6;  // Normalized to [0, 100]
+  double baseline_adjusted   = 7;  // After user baseline adjustment
+  double final_risk_score    = 8;  // Final clamped score [0, 100]
+  
+  // ---- Feature Vector ----
+  repeated double feature_vector = 9;  // 25-dimensional feature vector
+  
+  // ---- Anomaly Details ----
+  repeated string anomaly_flags  = 10; // Which features triggered anomaly
+  string anomaly_category        = 11; // Primary anomaly category
+  double confidence              = 12; // Model confidence [0, 1]
+  
+  // ---- Performance ----
+  int64 inference_time_us       = 13; // Time taken for scoring
+  string model_version          = 14; // Model version used
+  
+  // ---- Tracing ----
+  string trace_id   = 15;
+  string span_id    = 16;
+}

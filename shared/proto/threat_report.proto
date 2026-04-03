@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package civa.events;
+
+option go_package = "github.com/civa-platform/sentinel-sdk/pkg/models";
+
+// ThreatReport — Emitted by Threat Intel Agent after NLP classification
+message ThreatReport {
+  string report_id        = 1;   // CIVA-TI-YYYY-MMDD-NNN format
+  string session_id       = 2;
+  string user_id          = 3;
+  int64  generated_at_us  = 4;
+  
+  // ---- Classification ----
+  AttackClassification classification = 5;
+  
+  // ---- Attacker Profile ----
+  AttackerProfile attacker = 6;
+  
+  // ---- Indicators of Compromise ----
+  repeated IOC iocs = 7;
+  
+  // ---- Timeline ----
+  repeated TimelineEntry timeline = 8;
+  
+  // ---- Forensic Data ----
+  string forensic_s3_url  = 9;
+  
+  // ---- Recommendations ----
+  repeated string recommendations = 10;
+  
+  // ---- Retraining ----
+  repeated double attack_signature_vector = 11;  // For Behavior Agent retraining
+  bool   signature_novel    = 12;  // Is this a previously unseen pattern?
+  
+  // ---- Tracing ----
+  string trace_id   = 13;
+  string span_id    = 14;
+}
+
+message AttackClassification {
+  string attack_type      = 1;   // credential_stuffing, lateral_movement, etc.
+  double confidence       = 2;   // [0, 1]
+  string severity         = 3;   // low, medium, high, critical
+  repeated string mitre_attack_ids = 4;  // MITRE ATT&CK technique IDs
+}
+
+message AttackerProfile {
+  repeated string ip_addresses       = 1;
+  repeated string geo_locations      = 2;
+  repeated string device_fingerprints = 3;
+  repeated string user_agents        = 4;
+  repeated string session_ids        = 5;
+  int64  total_requests              = 6;
+  string time_window                 = 7;
+}
+
+message IOC {
+  string type   = 1;   // ip, ja3, user_agent, behavioral
+  string value  = 2;
+  double confidence = 3;
+}
+
+message TimelineEntry {
+  int64  timestamp_us = 1;
+  string event        = 2;
+  string severity     = 3;
+}

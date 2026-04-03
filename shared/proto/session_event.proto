@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package civa.events;
+
+option go_package = "github.com/civa-platform/sentinel-sdk/pkg/models";
+
+// SessionEvent — Emitted by Sentinel SDK for every intercepted request
+message SessionEvent {
+  string event_id       = 1;   // UUID v7 (time-sortable)
+  string session_id     = 2;   // JWT session identifier
+  string user_id        = 3;   // Authenticated user ID
+  int64  timestamp_us   = 4;   // Microsecond precision Unix timestamp
+
+  // ---- Extracted Signals ----
+  string client_ip      = 5;
+  string geo_country    = 6;
+  string geo_city       = 7;
+  int32  geo_asn        = 8;
+  string ja3_hash       = 9;   // TLS fingerprint
+  string device_fp      = 10;  // Device fingerprint hash
+  string user_agent_raw = 11;
+  bool   is_headless    = 12;  // Headless browser detected
+  
+  // ---- Velocity Metrics ----
+  double req_per_min    = 13;
+  double req_per_sec    = 14;
+  bool   burst_detected = 15;
+  
+  // ---- Request Context ----
+  string http_method    = 16;
+  string request_path   = 17;
+  int32  response_code  = 18;
+  int64  response_time_us = 19;
+  
+  // ---- JWT Metadata ----
+  int64  jwt_issued_at  = 20;
+  int64  jwt_expires_at = 21;
+  bool   jwt_replay     = 22;
+  
+  // ---- Tracing ----
+  string trace_id       = 23;
+  string span_id        = 24;
+  
+  // ---- Flexible metadata ----
+  map<string, string> metadata = 25;
+}
