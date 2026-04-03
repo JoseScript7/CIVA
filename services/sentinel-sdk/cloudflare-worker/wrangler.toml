@@ -1,0 +1,19 @@
+name = "civa-sentinel-edge"
+main = "src/index.ts"
+compatibility_date = "2024-03-01"
+
+[vars]
+ORIGIN_URL = "sentinel.civa.internal"
+VELOCITY_WINDOW_SEC = "60"
+VELOCITY_THRESHOLD = "100"
+
+[[kv_namespaces]]
+binding = "CIVA_KV"
+id = "YOUR_KV_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_KV_ID"
+
+[build]
+command = "npm run build"
+
+[observability]
+enabled = true
