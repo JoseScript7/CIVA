@@ -1,0 +1,98 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: civa-routing
+  namespace: civa
+spec:
+  hosts:
+    - "api.civa.internal"
+  gateways:
+    - civa-gateway
+  http:
+    # ---- Sentinel SDK (edge traffic) ----
+    - match:
+        - uri:
+            prefix: /
+          headers:
+            x-civa-shadow-session:
+              exact: ""  # Not a shadow session
+      route:
+        - destination:
+            host: sentinel-sdk
+            port:
+              number: 8001
+      timeout: 5s
+      retries:
+        attempts: 2
+        perTryTimeout: 2s
+
+---
+# Shadow session routing — routes attacker traffic to deception
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: civa-shadow-routing
+  namespace: civa
+spec:
+  hosts:
+    - "api.civa.internal"
+  gateways:
+    - civa-gateway
+  http:
+    - match:
+        - headers:
+            x-civa-shadow-session:
+              regex: ".+"  # Has shadow session header
+      route:
+        - destination:
+            host: deception-agent
+            port:
+              number: 8004
+      timeout: 10s
+
+---
+# Internal service-to-service routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: civa-internal-routing
+  namespace: civa
+spec:
+  hosts:
+    - behavior-agent
+    - orchestrator
+    - deception-agent
+    - threat-intel
+  http:
+    - route:
+        - destination:
+            host: behavior-agent
+            port:
+              number: 8002
+      match:
+        - uri:
+            prefix: /score
+    - route:
+        - destination:
+            host: orchestrator
+            port:
+              number: 8003
+      match:
+        - uri:
+            prefix: /decide
+    - route:
+        - destination:
+            host: deception-agent
+            port:
+              number: 8004
+      match:
+        - uri:
+            prefix: /activate
+    - route:
+        - destination:
+            host: threat-intel
+            port:
+              number: 8005
+      match:
+        - uri:
+            prefix: /classify

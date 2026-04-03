@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deception-agent
+  namespace: civa
+  labels:
+    app: deception-agent
+    version: v1
+    tier: defense
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: deception-agent
+  template:
+    metadata:
+      labels:
+        app: deception-agent
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8004"
+    spec:
+      containers:
+        - name: deception-agent
+          image: civa/deception-agent:latest
+          ports:
+            - containerPort: 8004
+          env:
+            - name: DECEPTION_AGENT_PORT
+              value: "8004"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: civa-config
+                  key: kafka.bootstrap.servers
+            - name: S3_FORENSIC_BUCKET
+              value: civa-forensics
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deception-agent
+  namespace: civa
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8004
+      targetPort: 8004
+      name: http
+  selector:
+    app: deception-agent
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: deception-agent
+  namespace: civa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: deception-agent
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

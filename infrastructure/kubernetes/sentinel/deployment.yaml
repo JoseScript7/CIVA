@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel-sdk
+  namespace: civa
+  labels:
+    app: sentinel-sdk
+    version: v1
+    tier: edge
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sentinel-sdk
+  template:
+    metadata:
+      labels:
+        app: sentinel-sdk
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: sentinel-sdk
+          image: civa/sentinel-sdk:latest
+          ports:
+            - containerPort: 8001
+              name: http
+              protocol: TCP
+          env:
+            - name: SENTINEL_PORT
+              value: "8001"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: civa-config
+                  key: kafka.bootstrap.servers
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: civa-secrets
+                  key: redis.url
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      nodeSelector:
+        workload-type: edge
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: sentinel-sdk
