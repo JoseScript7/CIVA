@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CIVA Sentinel &amp; Behavior Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#ffdad6",
+                      "on-secondary-container": "#00311f",
+                      "on-secondary-fixed-variant": "#005236",
+                      "primary-container": "#4d8eff",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#4edea3",
+                      "on-background": "#dfe2f1",
+                      "on-tertiary-fixed-variant": "#930013",
+                      "outline-variant": "#424754",
+                      "surface": "#0f131d",
+                      "surface-dim": "#0f131d",
+                      "tertiary-fixed-dim": "#ffb3ad",
+                      "error": "#ffb4ab",
+                      "surface-variant": "#313540",
+                      "primary-fixed-dim": "#adc6ff",
+                      "primary-fixed": "#d8e2ff",
+                      "on-primary-container": "#00285d",
+                      "error-container": "#93000a",
+                      "on-primary-fixed": "#001a42",
+                      "on-secondary-fixed": "#002113",
+                      "on-tertiary-container": "#5c0008",
+                      "secondary-fixed": "#6ffbbe",
+                      "secondary-container": "#00a572",
+                      "surface-tint": "#adc6ff",
+                      "on-primary-fixed-variant": "#004395",
+                      "surface-container-highest": "#313540",
+                      "surface-container": "#1c1f2a",
+                      "on-surface": "#dfe2f1",
+                      "inverse-surface": "#dfe2f1",
+                      "background": "#0f131d",
+                      "surface-container-lowest": "#0a0e18",
+                      "inverse-primary": "#005ac2",
+                      "primary": "#adc6ff",
+                      "surface-container-high": "#262a35",
+                      "on-secondary": "#003824",
+                      "surface-container-low": "#171b26",
+                      "outline": "#8c909f",
+                      "secondary": "#4edea3",
+                      "surface-bright": "#353944",
+                      "tertiary-container": "#ff5451",
+                      "on-tertiary-fixed": "#410004",
+                      "on-surface-variant": "#c2c6d6",
+                      "inverse-on-surface": "#2c303b",
+                      "on-tertiary": "#68000a",
+                      "tertiary": "#ffb3ad",
+                      "tertiary-fixed": "#ffdad7",
+                      "on-primary": "#002e6a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Space Grotesk"],
+                      "body": ["Inter"],
+                      "label": ["JetBrains Mono"]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0f131d; }
+        ::-webkit-scrollbar-thumb { background: #313540; }
+        ::-webkit-scrollbar-thumb:hover { background: #adc6ff; }
+        .glass-panel {
+            background: rgba(49, 53, 64, 0.2);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(66, 71, 84, 0.15);
+        }
+        .status-pulse {
+            box-shadow: 0 0 8px #4edea3;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .3; }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#171b26] dark:bg-[#171b26] flex flex-col py-6 z-[60]">
+<div class="px-6 mb-8">
+<h1 class="text-2xl font-bold tracking-tighter text-[#adc6ff] font-headline">CIVA</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant/60 font-label mt-1">Tactical Command Layer</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Sentinel Active -->
+<a class="bg-[#adc6ff]/10 text-[#adc6ff] border-r-2 border-[#adc6ff] px-4 py-3 flex items-center gap-3 transition-all font-headline font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
+<span>Sentinel</span>
+</a>
+<!-- Behavior Active (Both are primary for this combined view) -->
+<a class="bg-[#adc6ff]/10 text-[#adc6ff] border-r-2 border-[#adc6ff] px-4 py-3 flex items-center gap-3 transition-all font-headline font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span>Behavior</span>
+</a>
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-headline font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span>Orchestrator</span>
+</a>
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-headline font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">android_fingerprint</span>
+<span>Deception</span>
+</a>
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-headline font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">database</span>
+<span>Threat Intel</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant/10 pt-4 space-y-1">
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-headline font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">tune</span>
+<span>System Settings</span>
+</a>
+<a class="text-[#c2c6d6] hover:bg-[#1c1f2a] px-4 py-3 flex items-center gap-3 transition-colors font-headline font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">history</span>
+<span>Audit Logs</span>
+</a>
+<div class="px-4 py-4 mt-2 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center overflow-hidden">
+<img alt="System Administrator Profile" class="w-full h-full object-cover" data-alt="close-up minimalist avatar of a cyber security operative in a dark room with blue glowing interface light on their face" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvLjsw5ZRuUzSgyShjYjrUEBPi8VzF271AgnzA3YOxSFgwv-UpY8N76BODGxQTOBd6x9SobneEkqQJPqCmVxczekK0vkGNeDoAW2stGTD40YcCXRq16eUv1N0yvDF365XB8OunG1fT9Ovz2q02gk0waWD7auA9XS6-EiccK2RI1CgmIRdBlglkz3EluIM2lVt4o2QWQeg3sVrXIgMJqA6BG9tV2zfbE54ar0LFi1vfEbTXfckgogzK6inNJ3UabHrb7-KIVnigJIGu"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-semibold text-on-surface">Alpha Operator</span>
+<span class="text-[10px] text-secondary">L5 Clearance</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Shared Component) -->
+<header class="fixed top-0 right-0 left-64 h-16 w-[calc(100%-16rem)] z-50 bg-[#0f131d]/80 backdrop-blur-xl border-b border-[#424754]/15 flex justify-between items-center px-8 shadow-2xl shadow-black/40">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary status-pulse"></div>
+<span class="font-label text-xs font-semibold uppercase tracking-widest text-[#4edea3]">Global Health: Stable</span>
+</div>
+<span class="font-label text-xs font-semibold uppercase tracking-widest text-[#c2c6d6]">72k req/sec</span>
+<span class="font-label text-xs font-semibold uppercase tracking-widest text-[#c2c6d6]">Risk Score: 12.4</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 mr-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-[#adc6ff] transition-all">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-[#adc6ff] transition-all">terminal</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-[#adc6ff] transition-all">account_circle</button>
+</div>
+<button class="px-4 py-1.5 border border-outline-variant/30 text-[#c2c6d6] font-label text-[10px] uppercase tracking-widest hover:bg-surface-variant transition-all">SIEM Export</button>
+<button class="px-4 py-1.5 bg-primary text-on-primary font-label text-[10px] uppercase tracking-widest font-bold hover:brightness-125 transition-all">Deploy Policy</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 h-screen flex">
+<!-- Left Section: Sentinel Feed (Terminal Style) -->
+<section class="w-1/2 flex flex-col border-r border-outline-variant/10 bg-surface-container-lowest">
+<div class="p-4 border-b border-outline-variant/10 flex justify-between items-center bg-surface">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<h2 class="font-headline text-sm font-bold uppercase tracking-wider">Real-time Sentinel Feed</h2>
+</div>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 bg-primary/10 text-primary font-label text-[10px] rounded">KAFKA_STREAMING</span>
+<span class="px-2 py-0.5 bg-surface-variant text-on-surface-variant font-label text-[10px] rounded">SEC_OPS_01</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-4 font-label text-xs space-y-2 selection:bg-primary/30">
+<!-- Log Entry -->
+<div class="p-3 border-l-2 border-primary/40 bg-surface-container-low/30 hover:bg-surface-container-low transition-colors group">
+<div class="flex justify-between text-on-surface-variant mb-1">
+<span class="text-primary-fixed-dim">14:02:44.102</span>
+<span class="text-secondary opacity-0 group-hover:opacity-100 transition-opacity">MATCH_FOUND</span>
+</div>
+<div class="grid grid-cols-2 gap-x-4 gap-y-1">
+<div><span class="text-outline">IP:</span> <span class="text-on-surface">192.158.1.38</span></div>
+<div><span class="text-outline">GEO:</span> <span class="text-on-surface">US-VA-DC</span></div>
+<div><span class="text-outline">FINGERPRINT:</span> <span class="text-on-surface">af82..990b</span></div>
+<div><span class="text-outline">JWT_SUB:</span> <span class="text-on-surface">u_00192837</span></div>
+<div class="col-span-2"><span class="text-outline">VELOCITY:</span> <span class="text-secondary">42 req/min</span> (Normal)</div>
+</div>
+</div>
+<div class="p-3 border-l-2 border-tertiary/40 bg-tertiary/5 hover:bg-tertiary/10 transition-colors group">
+<div class="flex justify-between text-on-surface-variant mb-1">
+<span class="text-tertiary">14:02:44.581</span>
+<span class="text-tertiary font-bold">ANOMALY_DETECTED</span>
+</div>
+<div class="grid grid-cols-2 gap-x-4 gap-y-1">
+<div><span class="text-outline">IP:</span> <span class="text-tertiary">45.12.88.201</span></div>
+<div><span class="text-outline">GEO:</span> <span class="text-on-surface">NL-AMS</span></div>
+<div><span class="text-outline">FINGERPRINT:</span> <span class="text-on-surface">cc21..ff01</span></div>
+<div><span class="text-outline">JWT_SUB:</span> <span class="text-on-surface">u_null</span></div>
+<div class="col-span-2"><span class="text-outline">VELOCITY:</span> <span class="text-tertiary">890 req/min</span> (BURST)</div>
+</div>
+</div>
+<!-- Repeated logs for density -->
+<div class="p-3 border-l-2 border-primary/20 bg-transparent hover:bg-surface-container-low transition-colors">
+<div class="flex justify-between text-on-surface-variant mb-1">
+<span class="text-outline">14:02:45.001</span>
+<span class="text-secondary/50">OK</span>
+</div>
+<div class="text-outline/70">INGEST_SIGNAL [KAFKA_TOPIC: CIVA_SENTINEL_INBOUND] ... SUCCESS</div>
+</div>
+<div class="p-3 border-l-2 border-primary/40 bg-surface-container-low/30 hover:bg-surface-container-low transition-colors">
+<div class="flex justify-between text-on-surface-variant mb-1">
+<span class="text-primary-fixed-dim">14:02:45.412</span>
+<span>REQ_PROCESSED</span>
+</div>
+<div class="grid grid-cols-2 gap-x-4 gap-y-1">
+<div><span class="text-outline">IP:</span> <span class="text-on-surface">104.244.42.1</span></div>
+<div><span class="text-outline">GEO:</span> <span class="text-on-surface">US-CA-SFO</span></div>
+<div><span class="text-outline">JWT_SUB:</span> <span class="text-on-surface">u_0991122</span></div>
+<div><span class="text-outline">SCORE:</span> <span class="text-secondary">0.02</span></div>
+</div>
+</div>
+<div class="p-3 border-l-2 border-primary/20 bg-transparent">
+<div class="flex justify-between text-on-surface-variant mb-1">
+<span class="text-outline">14:02:46.119</span>
+<span class="text-secondary/50">OK</span>
+</div>
+<div class="text-outline/70">EXTRACT_ENTROPY [HASH: 90f..a1] ... COMPLETED</div>
+</div>
+<div class="p-3 border-l-2 border-primary/40 bg-surface-container-low/30">
+<div class="flex justify-between text-on-surface-variant mb-1">
+<span class="text-primary-fixed-dim">14:02:47.330</span>
+<span>REQ_PROCESSED</span>
+</div>
+<div class="grid grid-cols-2 gap-x-4 gap-y-1">
+<div><span class="text-outline">IP:</span> <span class="text-on-surface">192.158.1.38</span></div>
+<div><span class="text-outline">GEO:</span> <span class="text-on-surface">US-VA-DC</span></div>
+<div><span class="text-outline">JWT_SUB:</span> <span class="text-on-surface">u_00192837</span></div>
+<div><span class="text-outline">SCORE:</span> <span class="text-secondary">0.01</span></div>
+</div>
+</div>
+</div>
+<!-- Terminal Input Mimic -->
+<div class="p-3 bg-surface-container-low border-t border-outline-variant/20 flex items-center gap-3 font-label text-xs">
+<span class="text-secondary">$</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface flex-1 placeholder:text-outline/40" placeholder="Filter signals (e.g. geo:'US' score&gt;50)..." type="text"/>
+<span class="text-outline/40">CTRL + K</span>
+</div>
+</section>
+<!-- Right Section: ML Behavior Analytics (Bento Grid) -->
+<section class="w-1/2 overflow-y-auto p-6 bg-surface grid grid-cols-6 grid-rows-12 gap-4">
+<!-- Behavior ML Anomaly Graph (Large) -->
+<div class="col-span-6 row-span-5 glass-panel rounded-lg p-5 flex flex-col">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-headline text-lg font-bold">Behavior ML Anomaly Graph</h3>
+<p class="text-xs text-on-surface-variant">Baseline (TimescaleDB) vs Current Request Pattern</p>
+</div>
+<div class="flex gap-4 font-label text-[10px]">
+<div class="flex items-center gap-2"><span class="w-3 h-0.5 bg-outline-variant"></span> BASELINE</div>
+<div class="flex items-center gap-2"><span class="w-3 h-0.5 bg-primary"></span> CURRENT</div>
+</div>
+</div>
+<div class="flex-1 relative mt-2">
+<!-- SVG Graph Placeholder -->
+<svg class="w-full h-full" viewbox="0 0 800 200">
+<path class="text-outline-variant/30" d="M0,150 Q100,140 200,160 T400,140 T600,155 T800,145" fill="none" stroke="currentColor" stroke-width="2"></path>
+<path class="text-primary" d="M0,150 Q100,130 200,180 T400,110 T600,170 T800,100" fill="none" stroke="currentColor" stroke-width="2"></path>
+<circle class="fill-tertiary" cx="400" cy="110" r="4"></circle>
+<text class="fill-tertiary font-label text-[10px]" x="410" y="100">ANOMALY DETECTED (Δ 0.82)</text>
+</svg>
+</div>
+</div>
+<!-- Risk Score Distribution (Medium) -->
+<div class="col-span-3 row-span-4 glass-panel rounded-lg p-5">
+<h3 class="font-headline text-sm font-bold uppercase tracking-wider mb-4">Risk Distribution</h3>
+<div class="flex items-end gap-1 h-32">
+<div class="w-full bg-secondary/20 h-[80%] rounded-t-sm"></div>
+<div class="w-full bg-secondary/20 h-[95%] rounded-t-sm"></div>
+<div class="w-full bg-secondary/40 h-[60%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[30%] rounded-t-sm"></div>
+<div class="w-full bg-tertiary/40 h-[10%] rounded-t-sm"></div>
+<div class="w-full bg-tertiary h-[15%] rounded-t-sm shadow-[0_0_10px_#ffb3ad]"></div>
+<div class="w-full bg-tertiary/20 h-[5%] rounded-t-sm"></div>
+</div>
+<div class="flex justify-between mt-2 font-label text-[10px] text-outline">
+<span>LOW</span>
+<span>MED</span>
+<span>HIGH</span>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant/10">
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">Active Sessions:</span>
+<span class="font-label text-primary">12,842</span>
+</div>
+</div>
+</div>
+<!-- SageMaker Inference Status (Small) -->
+<div class="col-span-3 row-span-4 glass-panel rounded-lg p-5 flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline text-sm font-bold uppercase tracking-wider">SageMaker Status</h3>
+<div class="w-2 h-2 rounded-full bg-secondary status-pulse"></div>
+</div>
+<div class="space-y-4 flex-1 flex flex-col justify-center">
+<div class="flex justify-between items-baseline">
+<span class="text-[10px] text-on-surface-variant font-label uppercase">Avg Latency</span>
+<span class="text-2xl font-headline font-bold text-primary">12.4ms</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-[10px] font-label">
+<div class="p-2 bg-surface-container-lowest rounded">
+<div class="text-outline">UPTIME</div>
+<div class="text-on-surface">99.998%</div>
+</div>
+<div class="p-2 bg-surface-container-lowest rounded">
+<div class="text-outline">MODEL</div>
+<div class="text-on-surface">XG-SENT-V4</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Action / Map (Bottom Left) -->
+<div class="col-span-4 row-span-3 bg-surface-container rounded-lg overflow-hidden relative group">
+<img alt="Global Security Map" class="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="dark world map with glowing blue data points and arching light lines connecting major cities globally" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuixsxOCSprCC0XpDBq_WMbI1Xg5aDYaVi596X5wR-rE5EVhD-aMYyDLgu7Xsn5Unxjb3MynN0ZqlJS40cnMCnuplkZJIM2AxUam8BzAzFa1F-2gpxijMWIV-SX6XxVFo5YbLaiWWPe1jLgEoHxdkXfb7eR8k1-dav5rVnaJk8IHWXP8_Xzd6tebpoCBb925By9rYYMaxbLICTJdooBxjRWV-Re9LcnIhS9h1Gvll6h2pJmYXMLuz1JHmupGTehysVeH07Ro_AS1aU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent p-4 flex flex-col justify-end">
+<span class="font-label text-[10px] text-primary">LIVE GEOLOCATION TRAFFIC</span>
+<h4 class="font-headline text-lg font-bold">Signal Extraction Origin</h4>
+</div>
+<div class="absolute top-4 right-4">
+<button class="w-8 h-8 rounded-full bg-primary/20 backdrop-blur-md flex items-center justify-center hover:bg-primary/40 transition-colors">
+<span class="material-symbols-outlined text-primary text-sm">open_in_full</span>
+</button>
+</div>
+</div>
+<!-- Metrics Card (Bottom Right) -->
+<div class="col-span-2 row-span-3 glass-panel rounded-lg p-4 flex flex-col justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-sm">warning</span>
+<span class="font-headline text-xs font-bold uppercase tracking-widest text-tertiary">Alert Queue</span>
+</div>
+<div>
+<div class="text-3xl font-headline font-bold">14</div>
+<div class="text-[10px] font-label text-outline uppercase tracking-wider">Unresolved Events</div>
+</div>
+<button class="w-full py-2 bg-surface-container-highest hover:bg-surface-variant text-[10px] font-bold font-label uppercase tracking-widest transition-colors rounded">
+                    Review All
+                </button>
+</div>
+</section>
+</main>
+<!-- Contextual FAB (Only for main control screens) -->
+<div class="fixed bottom-8 right-8 z-[100]">
+<button class="w-14 h-14 bg-primary text-on-primary rounded shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 28px;">add_moderator</span>
+</button>
+</div>
+<script src="/nav.js"></script>
+<script src="/app.js"></script>
+</body></html>
