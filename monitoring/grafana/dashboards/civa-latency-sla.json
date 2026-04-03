@@ -1,0 +1,448 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "name": "SLA Breaches",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 2,
+  "links": [
+    {
+      "title": "Command Center",
+      "url": "/d/civa-command-center",
+      "type": "link"
+    }
+  ],
+  "panels": [
+    {
+      "title": "⏱ CIVA Latency SLA Dashboard — Performance Monitoring",
+      "type": "text",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "content": "# Service Latency & SLA Compliance\nMonitoring end-to-end request latency across all 5 CIVA agents. **SLA Target: p99 < 15ms for ML inference, p99 < 50ms end-to-end.**",
+        "mode": "markdown"
+      }
+    },
+    {
+      "title": "ML Inference p99",
+      "type": "gauge",
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 2 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_ml_inference_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "max": 25,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 15 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "E2E Pipeline p99",
+      "type": "gauge",
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 2 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_pipeline_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "red", "value": 50 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Sentinel p99",
+      "type": "gauge",
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 2 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_request_latency_seconds_bucket{service=\"sentinel-sdk\"}[5m])) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "max": 30,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Behavior p99",
+      "type": "gauge",
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 2 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_request_latency_seconds_bucket{service=\"behavior-agent\"}[5m])) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "max": 30,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 15 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Orchestrator p99",
+      "type": "gauge",
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 2 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_request_latency_seconds_bucket{service=\"orchestrator\"}[5m])) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "max": 30,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 15 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Deception p99",
+      "type": "gauge",
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 2 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_request_latency_seconds_bucket{service=\"deception-agent\"}[5m])) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "max": 30,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "All Services — p50 / p95 / p99 Latency",
+      "description": "Comprehensive latency percentiles across all CIVA microservices. Red threshold at 15ms SLA.",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 7 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, service) (rate(civa_request_latency_seconds_bucket[5m]))) * 1000",
+          "legendFormat": "{{service}} p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, service) (rate(civa_request_latency_seconds_bucket[5m]))) * 1000",
+          "legendFormat": "{{service}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, service) (rate(civa_request_latency_seconds_bucket[5m]))) * 1000",
+          "legendFormat": "{{service}} p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "gradientMode": "scheme",
+            "thresholdsStyle": { "mode": "dashed" }
+          },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 15 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] }
+      }
+    },
+    {
+      "title": "ML Inference Latency (Isolation Forest)",
+      "description": "Dedicated latency tracking for the Behavior Agent's ML inference pipeline. SLA: p99 < 15ms.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(civa_ml_inference_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(civa_ml_inference_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_ml_inference_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "histogram_quantile(0.999, rate(civa_ml_inference_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p99.9"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "scheme",
+            "thresholdsStyle": { "mode": "area" }
+          },
+          "thresholds": {
+            "steps": [
+              { "color": "transparent", "value": null },
+              { "color": "rgba(255, 0, 0, 0.1)", "value": 15 }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "p50" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#73BF69" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p95" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FADE2A" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p99" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FF9830" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p99.9" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#F2495C" } }]
+          }
+        ]
+      }
+    },
+    {
+      "title": "Kafka Publish Latency",
+      "description": "Time to publish session events to Kafka. High latency here indicates broker pressure.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(civa_kafka_publish_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_kafka_publish_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "title": "Request Rate per Service",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 25 },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(civa_requests_total[1m]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "gradientMode": "scheme"
+          },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }
+      }
+    },
+    {
+      "title": "Error Rate per Service",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 25 },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(civa_request_errors_total[5m])) / sum by (service) (rate(civa_requests_total[5m])) * 100",
+          "legendFormat": "{{service}} error %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "thresholdsStyle": { "mode": "dashed" }
+          },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "SLA Compliance Summary",
+      "description": "Percentage of requests meeting SLA targets over the selected time range.",
+      "type": "bargauge",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 33 },
+      "targets": [
+        {
+          "expr": "(1 - (sum by (service) (rate(civa_request_latency_seconds_bucket{le=\"0.015\"}[1h])) / sum by (service) (rate(civa_request_latency_seconds_count[1h])))) * 100",
+          "legendFormat": "{{service}} SLA breach %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 5,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 3 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "title": "Resource Utilization",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 33 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=~\"sentinel.*|behavior.*|orchestrator.*|deception.*|threat.*\"} / 1024 / 1024",
+          "legendFormat": "{{job}} RSS (MB)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decmbytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10
+          }
+        }
+      }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["civa", "security", "latency", "sla", "performance"],
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "query",
+        "query": "label_values(civa_request_latency_seconds_bucket, service)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "interval",
+        "type": "interval",
+        "query": "1m,5m,15m,30m,1h",
+        "current": { "text": "5m", "value": "5m" }
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "CIVA Latency SLA",
+  "uid": "civa-latency-sla",
+  "version": 1
+}

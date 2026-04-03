@@ -1,0 +1,440 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "name": "Threat Events",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 2,
+  "links": [
+    {
+      "title": "Command Center",
+      "url": "/d/civa-command-center",
+      "type": "link"
+    }
+  ],
+  "panels": [
+    {
+      "title": "🔴 CIVA Attack Timeline — Real-Time Threat Visualization",
+      "type": "text",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "content": "# Live Attack Feed\nReal-time visualization of detected attacks across all CIVA agents. Tracks credential stuffing, session hijacking, lateral movement, data exfiltration, and more.",
+        "mode": "markdown"
+      }
+    },
+    {
+      "title": "Active Attacks (Last 5m)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(increase(civa_threat_detection_total[5m]))",
+          "legendFormat": "attacks"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "dark-red", "mode": "fixed" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Kill Events (1h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(increase(civa_session_kills_total[1h]))",
+          "legendFormat": "kills"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "red", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "title": "Deception Redirects (1h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(increase(civa_deception_activations_total[1h]))",
+          "legendFormat": "redirects"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "orange", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "title": "MFA Challenges (1h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(increase(civa_mfa_challenges_total[1h]))",
+          "legendFormat": "challenges"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "yellow", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "title": "Honeypot Triggers (1h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(increase(civa_honeypot_triggers_total[1h]))",
+          "legendFormat": "triggers"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "dark-orange", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "title": "Threat Intel Reports (1h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(increase(civa_threat_reports_generated_total[1h]))",
+          "legendFormat": "reports"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "blue", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "title": "Attack Timeline — All Agents",
+      "description": "Time-series view of detected attacks across all CIVA agents, broken down by attack type.",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "sum by (attack_type) (rate(civa_threat_detection_total[1m]))",
+          "legendFormat": "{{attack_type}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 25,
+            "gradientMode": "scheme",
+            "pointSize": 5,
+            "showPoints": "auto",
+            "stacking": { "mode": "none" },
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "credential_stuffing" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FF4444" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "session_hijacking" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FF8C00" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "lateral_movement" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FFD700" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "data_exfiltration" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#8B0000" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "api_abuse" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#9370DB" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "reconnaissance" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#20B2AA" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "insider_threat" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#DC143C" } }]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum", "lastNotNull"] }
+      }
+    },
+    {
+      "title": "Attack Event Log (Stacked)",
+      "description": "Stacked bar chart showing the volume of each attack type over time.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum by (attack_type) (increase(civa_threat_detection_total[$__rate_interval]))",
+          "legendFormat": "{{attack_type}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "stacking": { "mode": "normal" },
+            "barAlignment": 0
+          }
+        }
+      },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "title": "Policy Action Timeline",
+      "description": "Shows the orchestrator's policy decisions over time — silent allow, MFA challenge, deception redirect, or session kill.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum by (action) (rate(civa_policy_actions_total[5m]))",
+          "legendFormat": "{{action}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 30,
+            "stacking": { "mode": "none" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "silent_allow" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#37872D" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "mfa_challenge" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#E0B400" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "activate_deception" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FF9830" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "kill_session" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#C4162A" } }]
+          }
+        ]
+      }
+    },
+    {
+      "title": "Attack Source Geolocation (Top 10 IPs)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (source_ip) (increase(civa_threat_detection_total[24h])))",
+          "legendFormat": "{{source_ip}}",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true } } }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "left" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "displayName", "value": "Attack Count" },
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+              { "id": "thresholds", "value": { "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 10 },
+                { "color": "red", "value": 50 }
+              ]}}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title": "MITRE ATT&CK Technique Distribution (24h)",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 24 },
+      "targets": [
+        {
+          "expr": "sum by (mitre_id) (increase(civa_threat_detection_total[24h]))",
+          "legendFormat": "{{mitre_id}}"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "legend": { "displayMode": "table", "placement": "right" }
+      }
+    },
+    {
+      "title": "Honeypot Trigger Heatmap",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 24 },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (rate(civa_honeypot_triggers_total[5m]))",
+          "legendFormat": "🍯 {{endpoint}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": { "mode": "normal" }
+          },
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "title": "Threat Confidence Score Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 32 },
+      "targets": [
+        {
+          "expr": "avg(civa_threat_confidence_score)",
+          "legendFormat": "avg confidence"
+        },
+        {
+          "expr": "max(civa_threat_confidence_score)",
+          "legendFormat": "max confidence"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "scheme"
+          }
+        }
+      }
+    },
+    {
+      "title": "Threat Reports Generated",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 32 },
+      "targets": [
+        {
+          "expr": "sum by (severity) (rate(civa_threat_reports_generated_total[5m]))",
+          "legendFormat": "{{severity}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "low" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#73BF69" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "medium" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FADE2A" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "high" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FF9830" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "critical" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#F2495C" } }]
+          }
+        ]
+      }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["civa", "security", "attacks", "timeline"],
+  "templating": {
+    "list": [
+      {
+        "name": "attack_type",
+        "type": "query",
+        "query": "label_values(civa_threat_detection_total, attack_type)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "service",
+        "type": "query",
+        "query": "label_values(civa_requests_total, service)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "interval",
+        "type": "interval",
+        "query": "1m,5m,15m,30m,1h",
+        "current": { "text": "5m", "value": "5m" }
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "CIVA Attack Timeline",
+  "uid": "civa-attack-timeline",
+  "version": 1
+}

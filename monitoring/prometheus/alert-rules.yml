@@ -1,0 +1,51 @@
+# CIVA Platform — Prometheus Alert Rules
+groups:
+  - name: civa-service-health
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "CIVA service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for 30 seconds"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.99, rate(civa_request_latency_seconds_bucket[5m])) > 0.015
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p99 latency on {{ $labels.service }}"
+          description: "p99 latency is {{ $value }}s (threshold: 15ms)"
+
+      - alert: HighRiskScoreRate
+        expr: rate(civa_risk_score_bucket{le="100"}[5m]) - rate(civa_risk_score_bucket{le="80"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High rate of critical risk scores detected"
+          description: "More than 10 sessions/min scoring >80"
+
+  - name: civa-ml-health
+    rules:
+      - alert: MLInferenceLatency
+        expr: histogram_quantile(0.99, rate(civa_ml_inference_latency_seconds_bucket[5m])) > 0.015
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ML inference p99 exceeding 15ms SLA"
+
+  - name: civa-kafka-health
+    rules:
+      - alert: KafkaConsumerLag
+        expr: kafka_consumergroup_lag > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag is high"
+          description: "Consumer group {{ $labels.group }} has lag of {{ $value }}"

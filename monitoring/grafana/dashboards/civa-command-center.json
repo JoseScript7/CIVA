@@ -1,0 +1,357 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "title": "🛡️ CIVA Security Command Center",
+      "type": "text",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "content": "# CIVA — Real-Time Threat Detection & Active Defense\nContinuous Identity Verification and Active Defense Platform",
+        "mode": "markdown"
+      }
+    },
+    {
+      "title": "Active Sessions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 2 },
+      "targets": [
+        {
+          "expr": "civa_active_sessions",
+          "legendFormat": "Sessions"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5000 },
+              { "color": "red", "value": 10000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Requests / sec",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(rate(civa_requests_total[1m]))",
+          "legendFormat": "req/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "title": "Threats Detected (24h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(increase(civa_requests_total{status=\"threat\"}[24h]))",
+          "legendFormat": "threats"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "red", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "title": "Sessions Killed",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(increase(civa_requests_total{endpoint=\"/kill\"}[24h]))",
+          "legendFormat": "killed"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "dark-red", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "title": "ML Inference p99",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 2 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(civa_ml_inference_latency_seconds_bucket[5m])) * 1000",
+          "legendFormat": "p99 ms"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "max": 20,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 15 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Deception Active",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 2 },
+      "targets": [
+        {
+          "expr": "sum(civa_active_sessions{service=\"deception-agent\"})",
+          "legendFormat": "shadow sessions"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "orange", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "title": "Risk Score Distribution (Live)",
+      "type": "histogram",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "sum by (le) (rate(civa_risk_score_bucket[5m]))",
+          "legendFormat": "{{le}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "title": "Attack Timeline",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(civa_requests_total{status=\"threat\"}[5m]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "scheme",
+            "pointSize": 5
+          }
+        }
+      }
+    },
+    {
+      "title": "Policy Tier Actions (per minute)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (rate(civa_requests_total{service=\"orchestrator\"}[1m]))",
+          "legendFormat": "{{endpoint}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "silent_allow" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "mfa_challenge" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "yellow" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "activate_deception" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "kill_session" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red" } }]
+          }
+        ]
+      }
+    },
+    {
+      "title": "Service Latency SLA (p50 / p95 / p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, service) (rate(civa_request_latency_seconds_bucket[5m]))) * 1000",
+          "legendFormat": "{{service}} p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, service) (rate(civa_request_latency_seconds_bucket[5m]))) * 1000",
+          "legendFormat": "{{service}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, service) (rate(civa_request_latency_seconds_bucket[5m]))) * 1000",
+          "legendFormat": "{{service}} p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "thresholdsStyle": { "mode": "dashed" }
+          },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 15 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Kafka Consumer Lag",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "expr": "sum by (topic) (kafka_consumergroup_lag)",
+          "legendFormat": "{{topic}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "fillOpacity": 20 }
+        }
+      }
+    },
+    {
+      "title": "Kafka Messages Produced",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 22 },
+      "targets": [
+        {
+          "expr": "sum by (topic) (rate(civa_kafka_messages_produced_total[5m]))",
+          "legendFormat": "{{topic}}"
+        }
+      ]
+    },
+    {
+      "title": "Honeypot Triggers",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 22 },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (rate(civa_requests_total{service=\"deception-agent\",endpoint=~\"honeypot.*\"}[5m]))",
+          "legendFormat": "🍯 {{endpoint}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "dark-orange", "mode": "fixed" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 80 }
+        }
+      }
+    },
+    {
+      "title": "Service Health",
+      "type": "table",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 29 },
+      "targets": [
+        {
+          "expr": "up{job=~\"sentinel.*|behavior.*|orchestrator.*|deception.*|threat.*\"}",
+          "legendFormat": "{{job}}",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true } } }
+      ]
+    },
+    {
+      "title": "Attack Type Classification",
+      "type": "piechart",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 29 },
+      "targets": [
+        {
+          "expr": "sum by (attack_type) (increase(civa_requests_total{service=\"threat-intel\"}[24h]))",
+          "legendFormat": "{{attack_type}}"
+        }
+      ]
+    },
+    {
+      "title": "MITRE ATT&CK Coverage",
+      "type": "bargauge",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 29 },
+      "targets": [
+        {
+          "expr": "count by (mitre_id) (civa_threat_detection_total)",
+          "legendFormat": "{{mitre_id}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "continuous-RdYlGr" }
+        }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["civa", "security", "threat-detection"],
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "query",
+        "query": "label_values(civa_requests_total, service)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": { "selected": true, "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "interval",
+        "type": "interval",
+        "query": "1m,5m,15m,30m,1h",
+        "current": { "text": "5m", "value": "5m" }
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "CIVA Security Command Center",
+  "uid": "civa-command-center",
+  "version": 1
+}

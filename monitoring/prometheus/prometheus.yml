@@ -1,0 +1,55 @@
+# CIVA Platform — Prometheus Configuration
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  - job_name: 'sentinel-sdk'
+    static_configs:
+      - targets: ['sentinel:8001']
+    metrics_path: /metrics
+
+  - job_name: 'behavior-agent'
+    static_configs:
+      - targets: ['behavior-agent:8002']
+    metrics_path: /metrics
+
+  - job_name: 'orchestrator'
+    static_configs:
+      - targets: ['orchestrator:8003']
+    metrics_path: /metrics
+
+  - job_name: 'deception-agent'
+    static_configs:
+      - targets: ['deception-agent:8004']
+    metrics_path: /metrics
+
+  - job_name: 'threat-intel'
+    static_configs:
+      - targets: ['threat-intel:8005']
+    metrics_path: /metrics
+
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka-1:9092', 'kafka-2:9093', 'kafka-3:9094']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'civa-hackathon-simulator'
+    static_configs:
+      - targets: ['host.docker.internal:8100']
+    metrics_path: /metrics
