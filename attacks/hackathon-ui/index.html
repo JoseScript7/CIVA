@@ -268,24 +268,25 @@
 <section class="col-span-12 lg:col-span-4 space-y-4">
 <div class="glass-panel p-4 rounded-lg">
 <h3 class="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant mb-4">Module Integrity</h3>
+<div id="backendStatus" class="px-3 py-2 mb-4 rounded text-xs font-label uppercase tracking-wider bg-secondary/10 text-secondary">✓ ALL SERVICES HEALTHY</div>
 <div class="space-y-3">
 <div class="flex items-center justify-between p-2 rounded bg-surface-container-low/50">
 <div class="flex items-center gap-3">
 <span class="material-symbols-outlined text-primary text-sm" data-icon="security">security</span>
 <span class="font-headline text-xs font-medium">Sentinel</span>
 </div>
-<div class="flex items-center gap-2 font-label text-[10px] text-secondary">
-                                ONLINE
+<div id="service-sentinel" class="flex items-center gap-2 font-label text-[10px] text-secondary">
+                                ✓ HEALTHY
                                 <div class="w-2 h-2 rounded-full bg-secondary status-glow-secondary"></div>
 </div>
 </div>
 <div class="flex items-center justify-between p-2 rounded bg-surface-container-low/50">
 <div class="flex items-center gap-3">
 <span class="material-symbols-outlined text-primary text-sm" data-icon="insights">insights</span>
-<span class="font-headline text-xs font-medium">Behavior</span>
+<span class="font-headline text-xs font-medium">Behavior Agent</span>
 </div>
-<div class="flex items-center gap-2 font-label text-[10px] text-secondary">
-                                ONLINE
+<div id="service-behaviorAgent" class="flex items-center gap-2 font-label text-[10px] text-secondary">
+                                ✓ HEALTHY
                                 <div class="w-2 h-2 rounded-full bg-secondary status-glow-secondary"></div>
 </div>
 </div>
@@ -294,18 +295,18 @@
 <span class="material-symbols-outlined text-primary text-sm" data-icon="settings_input_component">settings_input_component</span>
 <span class="font-headline text-xs font-medium">Orchestrator</span>
 </div>
-<div class="flex items-center gap-2 font-label text-[10px] text-secondary">
-                                ONLINE
+<div id="service-orchestrator" class="flex items-center gap-2 font-label text-[10px] text-secondary">
+                                ✓ HEALTHY
                                 <div class="w-2 h-2 rounded-full bg-secondary status-glow-secondary"></div>
 </div>
 </div>
 <div class="flex items-center justify-between p-2 rounded bg-surface-container-low/50">
 <div class="flex items-center gap-3">
 <span class="material-symbols-outlined text-primary text-sm" data-icon="biometric_setup">android_fingerprint</span>
-<span class="font-headline text-xs font-medium">Deception</span>
+<span class="font-headline text-xs font-medium">Deception Agent</span>
 </div>
-<div class="flex items-center gap-2 font-label text-[10px] text-secondary">
-                                ONLINE
+<div id="service-deceptionAgent" class="flex items-center gap-2 font-label text-[10px] text-secondary">
+                                ✓ HEALTHY
                                 <div class="w-2 h-2 rounded-full bg-secondary status-glow-secondary"></div>
 </div>
 </div>
@@ -314,8 +315,8 @@
 <span class="material-symbols-outlined text-primary text-sm" data-icon="database">database</span>
 <span class="font-headline text-xs font-medium">Threat Intel</span>
 </div>
-<div class="flex items-center gap-2 font-label text-[10px] text-secondary">
-                                ONLINE
+<div id="service-threatIntel" class="flex items-center gap-2 font-label text-[10px] text-secondary">
+                                ✓ HEALTHY
                                 <div class="w-2 h-2 rounded-full bg-secondary status-glow-secondary"></div>
 </div>
 </div>
@@ -452,5 +453,6 @@
 </div>
 
 <script src="/nav.js"></script>
-<script src="/app.js"></script>
+<script src="/app-realtime.js"></script>
+<script src="/ui-live.js"></script>
 </body></html>

@@ -1,26 +1,16 @@
 (function () {
-  const INACTIVE_CLASSES = [
-    "bg-[#adc6ff]/10",
-    "text-[#adc6ff]",
-    "border-r-2",
-    "border-[#adc6ff]"
-  ];
+  const INACTIVE_CLASSES = ["bg-[#adc6ff]/10", "text-[#adc6ff]", "border-r-2", "border-[#adc6ff]"];
+  const ACTIVE_CLASSES = ["bg-[#adc6ff]/10", "text-[#adc6ff]", "border-r-2", "border-[#adc6ff]"];
 
-  const ACTIVE_CLASSES = [
-    "bg-[#adc6ff]/10",
-    "text-[#adc6ff]",
-    "border-r-2",
-    "border-[#adc6ff]"
-  ];
-
+  // Keep navigation on the existing multi-page hackathon dashboard.
   const routes = {
-    Sentinel: "/?view=sentinel",
-    Behavior: "/?view=behavior",
-    Orchestrator: "/?view=orchestrator",
-    Deception: "/?view=deception",
-    "Threat Intel": "/?view=threat-intel",
-    "System Settings": "/?view=system-settings",
-    "Audit Logs": "/?view=audit-logs"
+    Sentinel: "/",
+    Behavior: "/behavior.html",
+    Orchestrator: "/orchestrator.html",
+    Deception: "/deception.html",
+    "Threat Intel": "/threat-intel.html",
+    "System Settings": "/system-settings.html",
+    "Audit Logs": "/audit-logs.html"
   };
 
   function textOf(el) {
@@ -45,14 +35,7 @@
           a.classList.add("text-[#c2c6d6]");
         }
 
-        a.addEventListener("click", (e) => {
-          const href = a.getAttribute("href") || "";
-          if (!href.startsWith("/?view=")) return;
-          e.preventDefault();
-          window.history.pushState({}, "", href);
-          markActive();
-          window.dispatchEvent(new CustomEvent("civa:view-change"));
-        });
+        // Use normal navigation so each existing dashboard page loads unchanged.
       }
     });
 
@@ -78,18 +61,15 @@
   }
 
   function markActive() {
-    const params = new URLSearchParams(window.location.search);
-    const view = (params.get("view") || "sentinel").toLowerCase();
-    const activeMap = {
-      "sentinel": "Sentinel",
-      "behavior": "Behavior",
-      "orchestrator": "Orchestrator",
-      "deception": "Deception",
-      "threat-intel": "Threat Intel",
-      "system-settings": "System Settings",
-      "audit-logs": "Audit Logs"
-    };
-    const active = activeMap[view] || "Sentinel";
+    const path = (window.location.pathname || "/").toLowerCase();
+    const active =
+      path.endsWith("/behavior.html") ? "Behavior" :
+      path.endsWith("/orchestrator.html") ? "Orchestrator" :
+      path.endsWith("/deception.html") ? "Deception" :
+      path.endsWith("/threat-intel.html") ? "Threat Intel" :
+      path.endsWith("/system-settings.html") ? "System Settings" :
+      path.endsWith("/audit-logs.html") ? "Audit Logs" :
+      "Sentinel";
 
     document.querySelectorAll("a").forEach((a) => {
       const label = textOf(a);
@@ -109,6 +89,5 @@
 
   window.addEventListener("popstate", () => {
     markActive();
-    window.dispatchEvent(new CustomEvent("civa:view-change"));
   });
 })();

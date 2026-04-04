@@ -2,11 +2,15 @@ import os
 import random
 import threading
 import time
+import subprocess
+import json
+import csv
+import io
 from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -31,6 +35,16 @@ BASE_DIR = Path(__file__).resolve().parent
 ELASTIC_URL = os.getenv("CIVA_ELASTIC_URL", "http://localhost:9200")
 ELASTIC_INDEX = os.getenv("CIVA_ELASTIC_INDEX", "civa-threats-live")
 OTLP_ENDPOINT = os.getenv("CIVA_OTLP_ENDPOINT", "http://localhost:4318/v1/traces")
+
+# Backend service URLs
+BEHAVIOR_AGENT_URL = os.getenv("BEHAVIOR_AGENT_URL", "http://localhost:8002")
+ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:8003")
+DECEPTION_AGENT_URL = os.getenv("DECEPTION_AGENT_URL", "http://localhost:8004")
+THREAT_INTEL_URL = os.getenv("THREAT_INTEL_URL", "http://localhost:8005")
+PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "http://localhost:9090")
+
+# WebSocket connections
+active_connections: list = []
 
 app = FastAPI(title="CIVA Hackathon Live Backend", version="1.0.0")
 app.add_middleware(
@@ -121,6 +135,20 @@ runner_stop = threading.Event()
 runner_state = {"running": False, "started_at": None, "generated": 0}
 tracer = None
 
+ui_settings = {
+    "theme": "dark",
+    "density": "compact",
+    "autonomous_mitigation": True,
+    "shadow_autoscaling": True,
+    "siem_frequency": "REAL-TIME (STREAM)",
+}
+
+rbac_operators = [
+    {"name": "K. Johns", "role": "ADMINISTRATOR", "clearance": "LVL-4"},
+    {"name": "M. Rossi", "role": "OPERATOR", "clearance": "LVL-2"},
+    {"name": "A. Lopez", "role": "AUDITOR", "clearance": "LVL-1"},
+]
+
 
 def _risk_to_action(risk: float) -> str:
     if risk < 30:
@@ -130,6 +158,88 @@ def _risk_to_action(risk: float) -> str:
     if risk < 80:
         return "DECEPTION"
     return "KILL"
+
+
+def _fetch_prometheus_metric(query: str) -> dict:
+    """Fetch metric from Prometheus"""
+    try:
+        response = requests.get(
+            f"{PROMETHEUS_URL}/api/v1/query",
+            params={"query": query},
+            timeout=2
+        )
+        if response.ok:
+            data = response.json()
+            if data["status"] == "success":
+                return data.get("data", {})
+    except Exception:
+        pass
+    return {}
+
+
+def _fetch_behavior_agent_metrics() -> dict:
+    """Fetch real-time metrics from Behavior Agent"""
+    try:
+        response = requests.get(f"{BEHAVIOR_AGENT_URL}/health", timeout=2)
+        if response.ok:
+            return response.json()
+    except Exception:
+        pass
+    return {"status": "offline"}
+
+
+def _fetch_orchestrator_status() -> dict:
+    """Fetch Orchestrator status"""
+    try:
+        response = requests.get(f"{ORCHESTRATOR_URL}/health", timeout=2)
+        if response.ok:
+            return response.json()
+    except Exception:
+        pass
+    return {"status": "offline"}
+
+
+def _fetch_deception_status() -> dict:
+    """Fetch Deception Agent status"""
+    try:
+        response = requests.get(f"{DECEPTION_AGENT_URL}/health", timeout=2)
+        if response.ok:
+            return response.json()
+    except Exception:
+        pass
+    return {"status": "offline"}
+
+
+def _fetch_threat_intel_status() -> dict:
+    """Fetch Threat Intel status"""
+    try:
+        response = requests.get(f"{THREAT_INTEL_URL}/health", timeout=2)
+        if response.ok:
+            return response.json()
+    except Exception:
+        pass
+    return {"status": "offline"}
+
+
+def _fetch_all_backend_metrics() -> dict:
+    """Aggregate metrics from all backend services"""
+    return {
+        "behavior_agent": _fetch_behavior_agent_metrics(),
+        "orchestrator": _fetch_orchestrator_status(),
+        "deception_agent": _fetch_deception_status(),
+        "threat_intel": _fetch_threat_intel_status(),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
+async def _broadcast_event(event: dict):
+    """Send event to all connected WebSocket clients"""
+    for connection in active_connections[:]:
+        try:
+            await connection.send_json(event)
+        except Exception:
+            active_connections.remove(connection)
+
 
 
 def _emit_trace(event: dict) -> None:
@@ -234,13 +344,31 @@ def _run_scenario():
 
 
 def _record_external_event(payload: dict) -> dict:
-    risk = float(payload.get("risk", random.uniform(10, 95)))
+    risk = float(payload.get("risk", payload.get("final_risk_score", random.uniform(10, 95))))
+
+    attack_name = payload.get("attack")
+    if not attack_name:
+        indicators = payload.get("attack_indicators", {}) if isinstance(payload.get("attack_indicators", {}), dict) else {}
+        behavioral = payload.get("behavioral_anomalies", {}) if isinstance(payload.get("behavioral_anomalies", {}), dict) else {}
+        failed_attempts = int(payload.get("failed_attempts", 0) or 0)
+
+        if indicators.get("bulk_export_detected") or indicators.get("data_staging_found"):
+            attack_name = "data_exfiltration_attempted"
+        elif indicators.get("mfa_bypass_attempts") or payload.get("phase") == 1:
+            attack_name = "mfa_bypass_attempt"
+        elif behavioral.get("location_change") or behavioral.get("device_change"):
+            attack_name = "lateral_movement"
+        elif failed_attempts >= 5:
+            attack_name = "credential_stuffing"
+        else:
+            attack_name = "external_attack"
+
     event = {
-        "id": payload.get("id", f"CVA-{random.randint(9000, 9999)}"),
+        "id": payload.get("id", payload.get("event_id", f"CVA-{random.randint(9000, 9999)}")),
         "time": time.strftime("%H:%M:%S"),
-        "attack": payload.get("attack", "external_attack"),
-        "ip": payload.get("ip", "0.0.0.0"),
-        "user_id": payload.get("user_id", "external-user"),
+        "attack": attack_name,
+        "ip": payload.get("ip", payload.get("client_ip", "0.0.0.0")),
+        "user_id": payload.get("user_id", payload.get("session_id", "external-user")),
         "risk": round(risk, 2),
         "action": payload.get("action", _risk_to_action(risk)),
         "ml_latency_ms": float(payload.get("ml_latency_ms", random.uniform(2, 15))),
@@ -291,6 +419,74 @@ def api_events_ingest(payload: dict):
     return JSONResponse({"ok": True, "event": event})
 
 
+@app.get("/api/settings")
+def api_settings_get():
+    return JSONResponse({"ok": True, "settings": ui_settings, "operators": rbac_operators})
+
+
+@app.post("/api/settings")
+def api_settings_set(payload: dict):
+    allowed_keys = {
+        "theme",
+        "density",
+        "autonomous_mitigation",
+        "shadow_autoscaling",
+        "siem_frequency",
+    }
+    for key, value in payload.items():
+        if key in allowed_keys:
+            ui_settings[key] = value
+    return JSONResponse({"ok": True, "settings": ui_settings, "message": "settings updated"})
+
+
+@app.post("/api/operators")
+def api_operators_add(payload: dict):
+    name = payload.get("name", "New Operator")
+    role = payload.get("role", "OPERATOR")
+    clearance = payload.get("clearance", "LVL-1")
+    item = {"name": str(name), "role": str(role), "clearance": str(clearance)}
+    rbac_operators.append(item)
+    return JSONResponse({"ok": True, "operator": item, "operators": rbac_operators})
+
+
+@app.get("/api/export/events.csv")
+def api_export_events_csv(limit: int = Query(default=200, ge=1, le=1000)):
+    with events_lock:
+        rows = list(events)[:limit]
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "id",
+        "time",
+        "attack",
+        "ip",
+        "user_id",
+        "risk",
+        "action",
+        "ml_latency_ms",
+        "pipeline_latency_ms",
+    ])
+    for row in rows:
+        writer.writerow([
+            row.get("id"),
+            row.get("time"),
+            row.get("attack"),
+            row.get("ip"),
+            row.get("user_id"),
+            row.get("risk"),
+            row.get("action"),
+            row.get("ml_latency_ms"),
+            row.get("pipeline_latency_ms"),
+        ])
+
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=civa-events.csv"},
+    )
+
+
 @app.post("/api/attack/start")
 def api_attack_start():
     global runner_thread
@@ -314,6 +510,181 @@ def api_attack_stop():
     return JSONResponse({"ok": True, "running": False, "message": "attack scenario stopped"})
 
 
+@app.get("/api/backend/status")
+def api_backend_status():
+    """Get real-time status of all backend services"""
+    metrics = _fetch_all_backend_metrics()
+    
+    # Check service health
+    services_status = {
+        "behavior_agent": metrics["behavior_agent"].get("status") == "healthy",
+        "orchestrator": metrics["orchestrator"].get("status") == "healthy",
+        "deception_agent": metrics["deception_agent"].get("status") == "healthy",
+        "threat_intel": metrics["threat_intel"].get("status") == "healthy"
+    }
+    
+    return JSONResponse({
+        "ok": True,
+        "services": services_status,
+        "metrics": metrics,
+        "all_healthy": all(services_status.values())
+    })
+
+
+@app.get("/api/prometheus/metrics")
+def api_prometheus_metrics(query: str = Query(None)):
+    """Fetch metrics from Prometheus"""
+    if not query:
+        # Default metrics for dashboard
+        queries = {
+            "active_sessions": "civa_active_sessions",
+            "risk_score": "avg(civa_current_risk_score)",
+            "model_confidence": "civa_model_confidence_score",
+            "threat_detections": "increase(civa_threat_detection_total[5m])",
+            "latency": "avg(civa_pipeline_latency_seconds)"
+        }
+    else:
+        queries = {"custom": query}
+    
+    try:
+        results = {}
+        for name, q in queries.items():
+            metric_data = _fetch_prometheus_metric(q)
+            if metric_data and "result" in metric_data:
+                results[name] = metric_data["result"]
+        return JSONResponse({"ok": True, "metrics": results})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@app.get("/api/behavior/scores")
+def api_behavior_scores(limit: int = Query(default=20, ge=1, le=100)):
+    """Get recent risk scores from Behavior Agent"""
+    try:
+        response = requests.get(
+            f"{BEHAVIOR_AGENT_URL}/api/scores?limit={limit}",
+            timeout=3
+        )
+        if response.ok:
+            return JSONResponse({"ok": True, "scores": response.json()})
+    except Exception as e:
+        pass
+    return JSONResponse({"ok": False, "scores": []})
+
+
+@app.post("/api/orchestrator/policy")
+def api_orchestrator_policy(policy: dict):
+    """Apply policy via Orchestrator"""
+    try:
+        response = requests.post(
+            f"{ORCHESTRATOR_URL}/api/policy/apply",
+            json=policy,
+            timeout=3
+        )
+        if response.ok:
+            return JSONResponse({"ok": True, "result": response.json()})
+    except Exception as e:
+        pass
+    return JSONResponse({"ok": False, "error": "Failed to apply policy"}, status_code=500)
+
+
+@app.post("/api/deception/honeypot")
+def api_deception_honeypot(config: dict):
+    """Deploy honeypot via Deception Agent"""
+    try:
+        response = requests.post(
+            f"{DECEPTION_AGENT_URL}/api/honeypot/deploy",
+            json=config,
+            timeout=3
+        )
+        if response.ok:
+            return JSONResponse({"ok": True, "result": response.json()})
+    except Exception as e:
+        pass
+    return JSONResponse({"ok": False, "error": "Failed to deploy honeypot"}, status_code=500)
+
+
+@app.get("/api/threat-intel/classify")
+def api_threat_intel_classify(event_id: str = Query(None)):
+    """Get threat classification from Threat Intel"""
+    try:
+        response = requests.get(
+            f"{THREAT_INTEL_URL}/api/classify?event_id={event_id}",
+            timeout=3
+        )
+        if response.ok:
+            return JSONResponse({"ok": True, "classification": response.json()})
+    except Exception as e:
+        pass
+    return JSONResponse({"ok": False, "classification": None}, status_code=500)
+
+
+@app.websocket("/ws/events")
+async def websocket_events(websocket: WebSocket):
+    """WebSocket for real-time event streaming"""
+    await websocket.accept()
+    active_connections.append(websocket)
+    
+    try:
+        # Send existing events first
+        with events_lock:
+            recent_events = list(events)[:50]
+        
+        for event in recent_events:
+            await websocket.send_json({"type": "event", "data": event})
+        
+        # Keep connection alive and listen for messages
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        if websocket in active_connections:
+            active_connections.remove(websocket)
+    except Exception:
+        if websocket in active_connections:
+            active_connections.remove(websocket)
+
+
+@app.post("/api/attack/execute")
+def api_attack_execute(attack_type: str = Query(None)):
+    """Execute attack script directly"""
+    if not attack_type:
+        return JSONResponse({"ok": False, "error": "attack_type required"}, status_code=400)
+    
+    attack_map = {
+        "credential_spray": "attacks/attack_scripts/credential_spray.py",
+        "session_hijacking": "attacks/attack_scripts/session_hijacking.py",
+        "phishing_mfa": "attacks/attack_scripts/phishing_mfa_bypass.py",
+        "all": "attacks/attack_scripts/run_all_attacks.sh"
+    }
+    
+    script = attack_map.get(attack_type)
+    if not script:
+        return JSONResponse({"ok": False, "error": "Unknown attack type"}, status_code=400)
+    
+    try:
+        script_path = Path(__file__).parent.parent.parent / script
+        if script_path.suffix == ".sh":
+            subprocess.Popen(
+                ["bash", str(script_path), "localhost"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        else:
+            subprocess.Popen(
+                ["python", str(script_path), "--target=http://localhost:8100/api/events/ingest"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        return JSONResponse({"ok": True, "message": f"Attack {attack_type} started"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+
+
+
 @app.get("/metrics")
 def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -321,3 +692,9 @@ def metrics():
 
 # Static site mount (must be last).
 app.mount("/", StaticFiles(directory=str(BASE_DIR), html=True), name="site")
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8100, reload=False)
